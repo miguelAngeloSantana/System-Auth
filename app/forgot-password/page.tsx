@@ -1,15 +1,18 @@
-"use client"
+"use client";
 
-import Link from "next/link"
+import Link from "next/link";
 
 import { useForm } from "react-hook-form";
+
 import z from "zod";
 
-import { useActionState, startTransition } from "react";
+import { useActionState, startTransition, useState } from "react";
 
 import { validationEmailForgot } from "@/actions/validationEmailForgot";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { authClient } from "@/lib/auth-client";
 
 const dataUserSchema = z.object({
     email: z.email({pattern: z.regexes.html5Email, error: 'Erro de autenticação'}),
@@ -25,7 +28,11 @@ export default function ForgotPassword() {
     
     const [ state, formAction, isPending ] = useActionState(validationEmailForgot, null);
 
-    function onSubmit(data: EmailType) {
+    const [ isLoading, setIsloaing ] = useState<boolean>(false);
+    const [ mensageError, setMensageError ] = useState<string>("");
+
+    async function onSubmit(data: EmailType) {
+        setIsloaing(true)
         const formData = new FormData()
 
         startTransition(async() => {
@@ -37,6 +44,30 @@ export default function ForgotPassword() {
         if (!state?.success) {
             reset()
         };
+
+        try {
+
+            const email = formData.get("email") as string;
+
+            const { error } = await authClient.requestPasswordReset({
+                email,
+                redirectTo: "/reset-password"
+            })
+
+            if(error) {
+                setIsloaing(false)
+                alert(error.message);
+            } else {
+                setIsloaing(true)
+                alert("Codigo enviado para o email inserido!");
+            };
+
+        } catch (error) {
+            setMensageError(error instanceof Error ? error.message: "Error inesperado, tente novamente");
+            console.log(error)
+        } finally{
+            setIsloaing(false)
+        }
     }
 
     return (
@@ -74,6 +105,21 @@ export default function ForgotPassword() {
                     Voltar para a tela de login
                 </Link>
             </div>
+
+               {
+                mensageError && (
+                    // <div>
+                        <span className="text-red-500 font-bold text-lg">{mensageError}</span>
+                    // </div>
+                )
+            }
+
+            {isLoading ? (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : null} 
 
         </div>
     )

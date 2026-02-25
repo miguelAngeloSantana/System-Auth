@@ -3,13 +3,16 @@
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import { useActionState, startTransition } from "react";
+import { useActionState, startTransition, useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { formRegisterAction } from "@/actions/formRegisterAction";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { authClient } from "@/lib/auth-client";
 
 const dataUserSchema = z.object({
     name: z.string().min(3, { error: "Nome não permitido" }),
@@ -36,6 +39,9 @@ const dataUserSchema = z.object({
 type LoginType = z.infer<typeof dataUserSchema>;
 
 export default function FormRegister() {
+
+    const [ isLoading, setIsloaing ] = useState<boolean>(false)
+    const router = useRouter()
     
     const { register, handleSubmit, formState, reset } = useForm<LoginType>({
         resolver: zodResolver(dataUserSchema)
@@ -43,7 +49,7 @@ export default function FormRegister() {
     
     const [ state, formAction, isPending ] = useActionState(formRegisterAction, null);
     
-    function onSubmit(data: LoginType) {
+    async function onSubmit(data: LoginType) {
         // console.log(data)
 
         const formData = new FormData();
@@ -59,6 +65,39 @@ export default function FormRegister() {
         if (!state?.success) {
             reset();
         };
+
+        try {
+
+            const name = formData.get("name") as string
+             const email = formData.get("email") as string
+             const password = formData.get("senha") as string
+    
+             const {} = await authClient.signUp.email({
+                    name: name,
+                    email: email,
+                    password: password,
+                    // callbackURL: "/perfil"
+                    
+                }, {
+                    onRequest: () => {
+                        setIsloaing(true)
+                    },
+                    onSuccess: () => {
+                       router.push("/perfil") 
+                    },
+                    onError: (ctx) => {
+                        if (ctx.error.status === 422) {
+                            alert("Email já cadastrado, tente usar outro")
+                        }
+                        console.log(ctx.error)
+                    }
+                })
+        } catch(error){
+            console.log(error)
+        } finally {
+            setIsloaing(false)
+        }
+
     };
 
     return (
@@ -121,10 +160,17 @@ export default function FormRegister() {
             </form>
 
             <div className="flex mt-3 gap-7">
-                <p>Não possui uma conta? 
-                    <Link href="/register" className="cursor-pointer text-lg font-bold hover:underline ml-2">Crie uma</Link>
+                <p>Já possui uma conta? 
+                    <Link href="/" className="cursor-pointer text-lg font-bold hover:underline ml-2">Faça login e acesse ela</Link>
                 </p>
             </div>
+
+            {isLoading ? (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : null} 
         </div>
     );
 };
