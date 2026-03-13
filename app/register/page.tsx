@@ -16,7 +16,7 @@ export default async function Register() {
     }
 
     return (
-        <div className="flex h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-zinc-950 sm:items-start">
+        <div className="flex h-screen w-full max-w-3xl flex-col items-center justify-between py-10 lg:py-20 px-6 md:px-16 bg-white dark:bg-zinc-950 sm:items-start">
             <FormRegister />
         </div>
     )

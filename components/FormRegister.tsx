@@ -50,7 +50,6 @@ export default function FormRegister() {
     const [ state, formAction, isPending ] = useActionState(formRegisterAction, null);
     
     async function onSubmit(data: LoginType) {
-        // console.log(data)
 
         const formData = new FormData();
 
@@ -66,32 +65,27 @@ export default function FormRegister() {
             reset();
         };
 
-        try {
 
-            const name = formData.get("name") as string
-             const email = formData.get("email") as string
-             const password = formData.get("senha") as string
-    
-             const {} = await authClient.signUp.email({
-                    name: name,
-                    email: email,
-                    password: password,
-                    // callbackURL: "/perfil"
+        try {
+            await authClient.signUp.email({
+                name: data.name,
+                email: data.email,
+                password: data.senha,
                     
-                }, {
-                    onRequest: () => {
-                        setIsloaing(true)
-                    },
-                    onSuccess: () => {
-                       router.push("/perfil") 
-                    },
-                    onError: (ctx) => {
-                        if (ctx.error.status === 422) {
-                            alert("Email já cadastrado, tente usar outro")
-                        }
-                        console.log(ctx.error)
+            }, {
+                onRequest: () => {
+                    setIsloaing(true)
+                },
+                onSuccess: () => {
+                    router.push("/perfil") 
+                },
+                onError: (ctx) => {
+                    if (ctx.error.status === 422) {
+                        alert("Email já cadastrado, logue usando ele")
                     }
-                })
+                    console.log(ctx.error)
+                }
+            })
         } catch(error){
             console.log(error)
         } finally {
@@ -102,15 +96,15 @@ export default function FormRegister() {
 
     return (
         <div className="flex flex-col items-center justify-center w-[90vw]">
-            <form className="flex flex-col gap-6 w-[50%]" onSubmit={handleSubmit(onSubmit)}>
+            <form className="flex flex-col gap-6 w-full lg:w-[50%]" onSubmit={handleSubmit(onSubmit)}>
                 <div className="flex flex-col gap-3">
                     <label>Digite seu Nome</label>
                     <input 
-                        type="text"  
+                        type="text"
                         required 
                         className="border border-zinc-800 shadow-sm h-10 bg-zinc-900 rounded focus:outline p-3"
                         {...register("name", { required: "É necessario inserir um nome" })}
-                        disabled={isPending}
+                        // disabled={isPending}
                     />
                     { formState.errors.name && <span className="text-red-500 font-bold text-lg">{formState.errors.name.message}</span> }
                 </div>
@@ -119,10 +113,11 @@ export default function FormRegister() {
                     <label>Digite seu e-mail</label>
                     <input 
                         type="email"  
+                        placeholder="seuemail@example.com"
                         required 
                         className="border border-zinc-800 shadow-sm h-10 bg-zinc-900 rounded focus:outline p-3"
                         {...register("email", { required: "É necessario inserir um email" })}
-                        disabled={isPending}
+                        // disabled={isPending}
                     />
                     { formState.errors.email && <span className="text-red-500 font-bold text-lg">{formState.errors.email.message}</span> }
                 </div>
@@ -131,9 +126,10 @@ export default function FormRegister() {
                     <label>Escreva sua senha</label>
                     <input 
                         type="password"
+                        placeholder="********"
                         className="border border-zinc-800 shadow-sm h-10 bg-zinc-900 rounded focus:outline p-3"
                         {...register("senha", { required: "É necessario inserir uma senha valida" })}
-                        disabled={isPending}
+                        // disabled={isPending}
                     />
                     { formState.errors.senha && <span className="text-red-500 font-bold text-lg">{formState.errors.senha.message}</span> }
                 </div>
@@ -142,17 +138,19 @@ export default function FormRegister() {
                     <label>Confirma senha</label>
                     <input 
                         type="password"
+                        placeholder="********"
                         className="border border-zinc-800 shadow-sm h-10 bg-zinc-900 rounded focus:outline p-3"
                         {...register("confirmaSenha", { required: "As senhas precisam estar iguais" })}
-                        disabled={isPending}
+                        // disabled={isPending}
                     />
                     { formState.errors.confirmaSenha && <span className="text-red-500 font-bold text-lg">{formState.errors.confirmaSenha.message}</span> }
                 </div>
 
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center">
                     <button 
                         type="submit" 
                         className="border border-zinc-200 bg-emerald-500 rounded w-full font-semibold h-10 hover:bg-emerald-600 cursor-pointer"
+                        disabled={isPending}
                     >
                         Login
                     </button>

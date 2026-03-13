@@ -8,13 +8,10 @@ import { useActionState, startTransition, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// import { formLoginAction } from "@/actions/formLoginAction";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authClient } from "@/lib/auth-client";
 import { formResetAction } from "@/actions/formResetAction";
-import { auth } from "@/lib/auth";
 
 const formSchema = z.object({
     password: z
@@ -69,11 +66,8 @@ export default function FormResetPassoword() {
         };
         
         try {
-            const password = formData.get("password") as string;
-            const confirmPassowrd = formData.get("confirmPassowrd") as string;
             
-            // const token = new URLSearchParams(window.location.search).get("token");
-            const token = searchParams.get("token") as string
+            const token = searchParams.get("token") as string;
 
             if (!token) {
                 setIsloaing(false);
@@ -81,29 +75,30 @@ export default function FormResetPassoword() {
                 return;
             }
 
-            if (password !== confirmPassowrd) {
+            if (data.password !== data.confirmPassowrd) {
                 alert("As senhas dvem ser iguais");
                 setIsloaing(false);
                 return;
             }
 
-            // console.log(token)
 
-            const { error } = await authClient.resetPassword({
-                newPassword: password,
+            await authClient.resetPassword({
+                newPassword: data.password,
                 token,
+            },{
+                onRequest: () => {
+                    setIsloaing(true);
+                },
+                onSuccess: () => {
+                    setIsloaing(false);
+                    alert("Senha resetada com sucesso");
+                    router.replace("/perfil");
+                },
+                onError: (error) => {
+                    alert(error.error.message);
+                    setIsloaing(false)
+                }
             })
-
-            
-            if (error) {
-                alert(error.message);
-                setIsloaing(false)
-            } else {
-                // await authClient.revokeSessions()
-                alert("Senha resetada com sucesso");
-                // await fetch("/api/auth/sign-in/email", { method: "POST", credentials: "include", });
-                router.replace("/");
-            };
         } catch(error) {
             setMensageError(error instanceof Error ? error.message: "Error inesperado, tente novamente");
             console.log(error)
@@ -113,32 +108,44 @@ export default function FormResetPassoword() {
     }
 
     return (
-        <div>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div>
-                    <label></label>
+        <div className="w-full h-screen flex flex-col justify-center items-center">
+            <h1 className="font-bold text-2xl mb-4">Digite sua nova senha</h1>
+            <form className="flex flex-col items-center g-6 w-full md:w-[60%] px-3" onSubmit={handleSubmit(onSubmit)}>
+                <div className="flex flex-col items-center w-full">
+                    <label className="mb-4">Nova senha:</label>
                     <input 
                         type="password" 
-                        id="" 
+                        placeholder="********"
+                        required
+                        className="w-full border border-zinc-900 rounded focus:outline p-6"
                         {...register("password", { required: "As senhas precisam ser iguais" })}
                     />
-                    { formState.errors.password && <span className="text-red-500 font-bold text-lg">{formState.errors.password.message}</span> }
+
+                    { formState.errors.password && 
+                        <span className="text-red-500 font-bold text-lg">{formState.errors.password.message}</span>
+                    }
 
                 </div>
 
-                <div>
-                    <label></label>
+                <div className="flex flex-col items-center w-full mt-8">
+                    <label className="mb-4">Digite a mesma senha novamente</label>
                     <input 
-                        type="password"
-                        id="" 
+                        type="password" 
+                        placeholder="********"
+                        required
+                        className="w-full border border-zinc-900 rounded focus:outline p-6" 
                         {...register("confirmPassowrd", { required: "As senhas devem ser iguais" })}    
                     />
-                    { formState.errors.confirmPassowrd && <span className="text-red-500 font-bold text-lg">{formState.errors.confirmPassowrd.message}</span> }
+
+                    { formState.errors.confirmPassowrd && 
+                        <span className="text-red-500 font-bold text-lg">{formState.errors.confirmPassowrd.message}</span> 
+                    }
  
                 </div>
 
-                <div>
-                    <button type="submit">
+                <div className="w-full flex justify-cente items mt-7">
+                    <button 
+                        className="w-full border border-zinc-200 rounded font-semibold h-16 cursor-pointer hover:bg-zinc-200 hover:text-black" type="submit">
                         Resetar senhas 
                     </button>
                 </div>
@@ -152,16 +159,23 @@ export default function FormResetPassoword() {
 
             {
                 mensageError && (
-                    // <div>
                         <span className="text-red-500 font-bold text-lg">{mensageError}</span>
-                    // </div>
                 )
             }
 
             {isLoading ? (
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg 
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24"
+                >
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+                  <path 
+                    className="opacity-75" 
+                    fill="currentColor" 
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : null} 
         </div>
